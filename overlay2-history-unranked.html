@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AphinXSa — Historique Unranked to</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        background: transparent;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: "Inter", sans-serif;
+      }
+      .widget {
+        position: absolute;
+        bottom: -94px;
+        left: 269px;
+        transform: translate(-50%, -50%);
+      }
+      .overlay {
+        width: 435px;
+        background: #010131;
+        border-radius: 12px;
+        border: 2px solid #59bfff;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 32px rgba(89, 191, 255, 0.08);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(89, 191, 255, 0.12);
+        background: linear-gradient(
+          90deg,
+          rgba(89, 191, 255, 0.04),
+          transparent
+        );
+      }
+      .header-rank {
+        font-size: 15px;
+        font-weight: 800;
+        color: #59bfff;
+        letter-spacing: -0.01em;
+      }
+      .header-lp {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(89, 191, 255, 0.6);
+        margin-left: 6px;
+      }
+      .header-summary {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sum-chip {
+        font-size: 9.5px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+      }
+      .sum-chip.w {
+        background: rgba(168, 224, 99, 0.1);
+        border: 1px solid rgba(168, 224, 99, 0.25);
+        color: #a8e063;
+      }
+      .sum-chip.l {
+        background: rgba(255, 107, 107, 0.1);
+        border: 1px solid rgba(255, 107, 107, 0.25);
+        color: #ff6b6b;
+      }
+      .history-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1px;
+        background: rgba(89, 191, 255, 0.06);
+      }
+      .game-cell {
+        background: #010131;
+        padding: 10px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        position: relative;
+      }
+      .game-cell::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+      }
+      .game-cell.win::before {
+        background: linear-gradient(90deg, transparent, #a8e063, transparent);
+        opacity: 0.6;
+      }
+      .game-cell.loss::before {
+        background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+        opacity: 0.4;
+      }
+      .champ-portrait {
+        position: relative;
+        width: 40px;
+        height: 40px;
+      }
+      .champ-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+        border: 2px solid transparent;
+      }
+      .game-cell.win .champ-img {
+        border-color: rgba(168, 224, 99, 0.55);
+      }
+      .game-cell.loss .champ-img {
+        border-color: rgba(255, 107, 107, 0.45);
+        filter: brightness(0.8) saturate(0.7);
+      }
+      .result-badge {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 8px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #010131;
+      }
+      .result-badge.win {
+        background: #a8e063;
+        color: #010131;
+      }
+      .result-badge.loss {
+        background: #ff6b6b;
+        color: #fff;
+      }
+      .champ-name {
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        text-align: center;
+      }
+      .game-cell.loss .champ-name {
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .kda-line {
+        font-size: 10px;
+        font-weight: 600;
+        color: rgba(89, 191, 255, 0.8);
+      }
+      .kda-ratio {
+        font-size: 8px;
+        font-weight: 800;
+      }
+      .kda-ratio.win {
+        color: #a8e063;
+      }
+      .kda-ratio.loss {
+        color: rgba(255, 107, 107, 0.75);
+      }
+      .footer {
+        padding: 5px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(89, 191, 255, 0.08);
+      }
+      .footer-kda {
+        font-size: 9px;
+        color: rgba(89, 191, 255, 0.6);
+      }
+      .footer-kda strong {
+        color: #59bfff;
+        font-weight: 700;
+      }
+      .footer-time {
+        font-size: 8.5px;
+        color: rgba(89, 191, 255, 0.25);
+      }
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: #010131;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        z-index: 10;
+        border-radius: 12px;
+      }
+      .spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(89, 191, 255, 0.15);
+        border-top-color: #59bfff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        font-size: 10px;
+        color: rgba(89, 191, 255, 0.45);
+        letter-spacing: 0.08em;
+      }
+      .error-msg {
+        font-size: 10px;
+        color: #ff6b6b;
+        text-align: center;
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="widget" id="widget">
+      <div class="overlay" id="overlay">
+        <div class="loading-overlay" id="loader">
+          <div class="spinner"></div>
+          <span class="loading-text">Chargement de l'historique...</span>
+        </div>
+        <div class="header">
+          <div>
+            <span class="header-rank" id="header-rank">—</span
+            ><span class="header-lp" id="header-lp"></span>
+          </div>
+          <div class="header-summary" id="summary"></div>
+        </div>
+        <div class="history-grid" id="history-grid"></div>
+        <div class="footer">
+          <span class="footer-kda" id="footer-kda"></span>
+          <span class="footer-time" id="footer-time"></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ═══════════════════════════════════════════
+      // CONFIG
+      // ═══════════════════════════════════════════
+      const API_KEY = "RGAPI-46ae4afb-1e43-404b-8ae0-735476e528d7";
+      const GAME_NAME = "AphinXSa";
+      const TAG_LINE = "ADC";
+      const REGION = "europe";
+      const QUEUE_ID = 420; // SoloQ — 440 pour Flex
+      const COUNT = 10;
+
+      let DD_VERSION = "14.24.1";
+      let DD_BASE = "";
+
+      // ═══════════════════════════════════════════
+      // API
+      // ═══════════════════════════════════════════
+      async function riotFetch(url) {
+        const sep = url.includes("?") ? "&" : "?";
+        const r = await fetch(`${url}${sep}api_key=${API_KEY}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }
+
+      async function getVersion() {
+        try {
+          const v = await fetch(
+            "https://ddragon.leagueoflegends.com/api/versions.json",
+          ).then((r) => r.json());
+          DD_VERSION = v[0];
+        } catch (_) {}
+        DD_BASE = `https://ddragon.leagueoflegends.com/cdn/${DD_VERSION}`;
+      }
+
+      function champIcon(name) {
+        return `${DD_BASE}/img/champion/${name.replace(/[^a-zA-Z0-9]/g, "")}.png`;
+      }
+
+      function kdaRatio(k, d, a) {
+        return d === 0 ? "Perfect" : ((k + a) / d).toFixed(2);
+      }
+
+      async function fetchHistory() {
+        await getVersion();
+        const acc = await riotFetch(
+          `https://${REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(GAME_NAME)}/${encodeURIComponent(TAG_LINE)}`,
+        );
+        const puuid = acc.puuid;
+
+        const [entries, matchIds] = await Promise.all([
+          riotFetch(
+            `https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`,
+          ),
+          riotFetch(
+            `https://${REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=${QUEUE_ID}&count=${COUNT}`,
+          ),
+        ]);
+
+        const soloq =
+          entries.find((e) => e.queueType === "RANKED_SOLO_5x5") || null;
+        const matches = await Promise.all(
+          matchIds.map((id) =>
+            riotFetch(
+              `https://${REGION}.api.riotgames.com/lol/match/v5/matches/${id}`,
+            ),
+          ),
+        );
+        const games = matches
+          .map((m) => {
+            const p = m.info.participants.find((x) => x.puuid === puuid);
+            if (!p) return null;
+            return {
+              champion: p.championName,
+              k: p.kills,
+              d: p.deaths,
+              a: p.assists,
+              win: p.win,
+            };
+          })
+          .filter(Boolean);
+
+        return { soloq, games };
+      }
+
+      // ═══════════════════════════════════════════
+      // RENDER
+      // ═══════════════════════════════════════════
+      function renderRank(soloq) {
+        if (!soloq) return;
+        const tier = soloq.tier.charAt(0) + soloq.tier.slice(1).toLowerCase();
+        const rankStr = `${tier} ${soloq.rank}`;
+        document.getElementById("header-rank").textContent = rankStr;
+        document.getElementById("header-lp").textContent =
+          `· ${soloq.leaguePoints} LP`;
+      }
+
+      function renderHistory(games) {
+        const wins = games.filter((g) => g.win).length;
+        const losses = games.length - wins;
+
+        document.getElementById("summary").innerHTML =
+          `<span class="sum-chip w">${wins}V</span><span class="sum-chip l">${losses}D</span>`;
+
+        document.getElementById("history-grid").innerHTML = games
+          .map((g) => {
+            const cls = g.win ? "win" : "loss";
+            return `<div class="game-cell ${cls}">
+      <div class="champ-portrait">
+        <img class="champ-img" src="${champIcon(g.champion)}" alt="${g.champion}" onerror="this.style.opacity='.2'">
+        <div class="result-badge ${cls}">${g.win ? "W" : "L"}</div>
+      </div>
+      <span class="champ-name">${g.champion}</span>
+      <span class="kda-line">${g.k}/${g.d}/${g.a}</span>
+      <span class="kda-ratio ${cls}">${kdaRatio(g.k, g.d, g.a)} KDA</span>
+    </div>`;
+          })
+          .join("");
+
+        const avg =
+          games.reduce(
+            (acc, g) => acc + (g.d === 0 ? g.k + g.a : (g.k + g.a) / g.d),
+            0,
+          ) / games.length;
+        document.getElementById("footer-kda").innerHTML =
+          `KDA moyen : <strong>${avg.toFixed(2)}</strong>`;
+
+        const now = new Date();
+        document.getElementById("footer-time").textContent =
+          `Chargé à ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+      }
+
+      // ═══════════════════════════════════════════
+      // INIT — appelé une seule fois au chargement
+      // OBS recharge la page à chaque changement de scène
+      // ═══════════════════════════════════════════
+      async function init() {
+        try {
+          const { soloq, games } = await fetchHistory();
+          renderRank(soloq);
+          renderHistory(games);
+          document.getElementById("loader").style.display = "none";
+        } catch (err) {
+          document.getElementById("loader").innerHTML =
+            `<span class="error-msg">Erreur : ${err.message}</span>`;
+          console.error(err);
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

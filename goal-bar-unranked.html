@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AphinXSa – GOAL BAR Unranked</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px; height: 1080px;
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: #e8f4ff;
+  }
+
+  :root {
+    --navy: #010131;
+    --blue: #59bfff;
+    --blue-dim: rgba(89,191,255,0.12);
+    --blue-glow: rgba(89,191,255,0.5);
+    --white: #e8f4ff;
+  }
+
+  #rank-goal-bar {
+    position: absolute;
+    bottom: 50px; left: 500px;
+    width: 380px;
+    background: rgba(1,1,49,0.85);
+    border: 2px solid var(--blue);
+    border-radius: 8px;
+    padding: 24px 32px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 30px rgba(89,191,255,0.1);
+  }
+
+  .rank-goal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    text-underline-offset: 6px;
+  }
+
+  .rank-goal-text {
+    font-size: 33px; font-weight: 600;
+    color: var(--white);
+    margin-bottom: 15px;
+  }
+
+  .rank-goal-progress-wrap {
+    height: 14px;
+    background: rgba(89,191,255,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .rank-goal-progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--blue), #90d9ff);
+    border-radius: 6px;
+    width: 0%;
+    transition: width 1.2s ease;
+    box-shadow: 0 0 16px var(--blue-glow);
+  }
+
+  .rank-goal-values {
+    display: flex; justify-content: space-between;
+    margin-top: 8px;
+    font-size: 24px; font-weight: 600;
+    color: rgba(232,244,255,0.8);
+    letter-spacing: 0.06em;
+  }
+
+  .rank-goal-values .current { color: var(--blue); }
+</style>
+</head>
+<body>
+
+<div id="rank-goal-bar">
+  <div class="rank-goal-title"><u>Unranked to...</u><span>Emeraude ? Diamant ?</span></div>
+  <div class="rank-goal-text" id="goal-text">—</div>
+  <div class="rank-goal-progress-wrap">
+    <div class="rank-goal-progress-fill" id="goal-fill"></div>
+  </div>
+  <div class="rank-goal-values">
+    <span class="current" id="rank-goal-current">—</span>
+    <span id="rank-goal-target">Diamond IV</span>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const API_KEY   = "RGAPI-46ae4afb-1e43-404b-8ae0-735476e528d7";
+const GAME_NAME = "AphinXSa";
+const TAG_LINE  = "ADC";
+const REGION    = "europe";
+const PLATFORM  = "euw1";
+
+// Objectif : Diamond IV 1 LP
+const GOAL_TIER = "DIAMOND";
+const GOAL_RANK = "IV";
+const GOAL_LP   = 1;
+
+// ═══════════════════════════════════════════
+// LP TOTAL — pour calculer la progression
+// Chaque division = 100 LP, chaque tier = 4 divisions
+// ═══════════════════════════════════════════
+const TIER_ORDER = ["IRON","BRONZE","SILVER","GOLD","PLATINUM","EMERALD","DIAMOND"];
+const RANK_ORDER = ["IV","III","II","I"];
+
+function totalLP(tier, rank, lp) {
+  const tierIdx = TIER_ORDER.indexOf(tier);
+  const rankIdx = RANK_ORDER.indexOf(rank);
+  return (tierIdx * 400) + (rankIdx * 100) + lp;
+}
+
+// ═══════════════════════════════════════════
+// NOM AFFICHAGE
+// ═══════════════════════════════════════════
+const TIER_FR = {
+  IRON: "Fer", BRONZE: "Bronze", SILVER: "Argent",
+  GOLD: "Or", PLATINUM: "Platine", EMERALD: "Émeraude", DIAMOND: "Diamant",
+};
+
+function displayRank(tier, rank, lp) {
+  return `${TIER_FR[tier] || tier} ${rank} — ${lp} LP`;
+}
+
+function displayShort(tier, rank) {
+  return `${TIER_FR[tier] || tier} ${rank}`;
+}
+
+// ═══════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════
+async function riotFetch(url) {
+  const sep = url.includes("?") ? "&" : "?";
+  const r = await fetch(`${url}${sep}api_key=${API_KEY}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function fetchRank() {
+  const acc   = await riotFetch(`https://${REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(GAME_NAME)}/${encodeURIComponent(TAG_LINE)}`);
+  const entries = await riotFetch(`https://${PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/${acc.puuid}`);
+  const soloq = entries.find(e => e.queueType === "RANKED_SOLO_5x5");
+  if (!soloq) throw new Error("Pas de rang SoloQ trouvé");
+  return { tier: soloq.tier, rank: soloq.rank, lp: soloq.leaguePoints };
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function render({ tier, rank, lp }) {
+  const current = totalLP(tier, rank, lp);
+  const goal    = totalLP(GOAL_TIER, GOAL_RANK, GOAL_LP);
+
+  // Calculer le point de départ de la progression (début du palier actuel)
+  // On part du début du tier actuel pour avoir une barre qui a du sens
+  const tierStart = totalLP(tier, "IV", 0);
+  const range     = goal - tierStart;
+  const progress  = current - tierStart;
+  const pct       = Math.min(100, Math.max(0, Math.round((progress / range) * 100)));
+
+  // Texte central : rank actuel → objectif
+  document.getElementById("goal-text").textContent =
+    `${TIER_FR[tier] || tier} → Diamant`;
+
+  // Barre de progression (délai court pour que la transition CSS soit visible)
+  setTimeout(() => {
+    document.getElementById("goal-fill").style.width = `${pct}%`;
+  }, 100);
+
+  // Labels bas
+  document.getElementById("rank-goal-current").textContent = displayRank(tier, rank, lp);
+  document.getElementById("rank-goal-target").textContent  = "Diamond IV";
+}
+
+// ═══════════════════════════════════════════
+// INIT — une seule fois au chargement
+// OBS recharge la page à chaque changement de scène
+// ═══════════════════════════════════════════
+async function init() {
+  try {
+    const data = await fetchRank();
+    render(data);
+  } catch (err) {
+    document.getElementById("goal-text").textContent = `Erreur : ${err.message}`;
+    console.error(err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
