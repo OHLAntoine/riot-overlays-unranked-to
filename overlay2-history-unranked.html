@@ -346,7 +346,11 @@
       // RENDER
       // ═══════════════════════════════════════════
       function renderRank(soloq) {
-        if (!soloq) return;
+        if (!soloq) {
+          document.getElementById("header-rank").textContent = "Unranked";
+          document.getElementById("header-lp").textContent = "";
+          return;
+        }
         const tier = soloq.tier.charAt(0) + soloq.tier.slice(1).toLowerCase();
         const rankStr = `${tier} ${soloq.rank}`;
         document.getElementById("header-rank").textContent = rankStr;
@@ -355,6 +359,16 @@
       }
 
       function renderHistory(games) {
+        if (games.length === 0) {
+          document.getElementById("history-grid").innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: rgba(89,191,255,0.45); font-size: 11px; letter-spacing: 0.08em;">
+            Aucune partie SoloQ jouée pour le moment
+            </div>`;
+          document.getElementById("summary").innerHTML = '';
+          document.getElementById("footer-kda").textContent = '';
+          document.getElementById("footer-time").textContent = `Chargé à ${new Date().getHours().toString().padStart(2,'0')}:${new Date().getMinutes().toString().padStart(2,'0')}`;
+        return;
+        }
         const wins = games.filter((g) => g.win).length;
         const losses = games.length - wins;
 
