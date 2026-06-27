@@ -28,6 +28,7 @@
     position: absolute;
     bottom: 50px; left: 500px;
     width: 380px;
+    min-height: 281.5px;
     background: rgba(1,1,49,0.85);
     border: 2px solid var(--blue);
     border-radius: 8px;
@@ -85,7 +86,7 @@
 <body>
 
 <div id="rank-goal-bar">
-  <div class="rank-goal-title"><u>Unranked to...</u><span>Emeraude ? Diamant ?</span></div>
+  <div class="rank-goal-title"><u>Unranked to...</u><span>Emeraude ? more ?</span></div>
   <div class="rank-goal-text" id="goal-text">—</div>
   <div class="rank-goal-progress-wrap">
     <div class="rank-goal-progress-fill" id="goal-fill"></div>
@@ -154,7 +155,7 @@ async function fetchRank() {
   const acc   = await riotFetch(`https://${REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(GAME_NAME)}/${encodeURIComponent(TAG_LINE)}`);
   const entries = await riotFetch(`https://${PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/${acc.puuid}`);
   const soloq = entries.find(e => e.queueType === "RANKED_SOLO_5x5");
-  if (!soloq) throw new Error("Pas de rang SoloQ trouvé");
+  if (!soloq) throw new Error("Unranked");
   return { tier: soloq.tier, rank: soloq.rank, lp: soloq.leaguePoints };
 }
 
@@ -195,7 +196,7 @@ async function init() {
     const data = await fetchRank();
     render(data);
   } catch (err) {
-    document.getElementById("goal-text").textContent = `Erreur : ${err.message}`;
+    document.getElementById("goal-text").textContent = `${err.message}`;
     console.error(err);
   }
 }
